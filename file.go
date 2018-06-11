@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"sync"
+	"time"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -12,11 +13,13 @@ import (
 
 const byteSize = 1024
 
-var bytePool = sync.Pool{
-	New: func() interface{} {
-		return make([]byte, byteSize)
-	},
-}
+var (
+	bytePool = sync.Pool{
+		New: func() interface{} {
+			return make([]byte, byteSize)
+		},
+	}
+)
 
 type File struct {
 	Name string
@@ -36,6 +39,7 @@ func (f *File) Attr(_ context.Context, attr *fuse.Attr) error {
 }
 
 func (f *File) Open(_ context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fs.Handle, error) {
+	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	err := f.fill()
 	if err != nil {
 		return nil, err
@@ -69,6 +73,7 @@ func (f *File) fill() error {
 }
 
 func (f *File) ReadAll(_ context.Context) ([]byte, error) {
+	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	err := f.fill()
 	if err != nil {
 		return nil, err
@@ -104,6 +109,7 @@ end:
 }
 
 func (f *File) Read(_ context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) (err error) {
+	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	var n int
 	if f.file == nil {
 		err = fuse.ENOTSUP
@@ -119,6 +125,7 @@ end:
 }
 
 func (f *File) Release(_ context.Context, req *fuse.ReleaseRequest) error {
+	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	if f.file != nil {
 		f.file.Close()
 		f.file = nil
@@ -127,6 +134,7 @@ func (f *File) Release(_ context.Context, req *fuse.ReleaseRequest) error {
 }
 
 func (f *File) Write(_ context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) (err error) {
+	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	var n int
 	if f.file == nil {
 		err = fuse.ENOTSUP

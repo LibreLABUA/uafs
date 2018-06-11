@@ -149,6 +149,10 @@ func (fs *FS) download(item *uaitem) error {
 	res.BodyWriteTo(file)
 	file.Close()
 
+	fs.Lock()
+	fs.downloadFiles = append(fs.downloadFiles, to)
+	fs.Unlock()
+
 	fasthttp.ReleaseRequest(req)
 	fasthttp.ReleaseResponse(res)
 	return nil

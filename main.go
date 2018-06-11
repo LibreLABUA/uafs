@@ -1,22 +1,28 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"path"
 	"strings"
+	"sync"
+	"time"
 	"unsafe"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 	"github.com/erikdubbelboer/fasthttp"
 	"github.com/howeyc/gopass"
+	"github.com/marcsantiago/gocron"
 	"github.com/sevlyar/go-daemon"
 	"github.com/spf13/afero"
 	"github.com/themester/fcookiejar"
 	"github.com/valyala/fastrand"
 )
+
+var maxFiles = flag.Int("n", 5, "Max files")
 
 func main() {
 	if len(os.Args) < 3 {
@@ -90,6 +96,8 @@ func main() {
 	}
 	defer fconn.Close()
 
+	gocron.Every(2).Minutes().Do(checkFiles, root)
+
 	err = fs.Serve(fconn, root)
 	if err != nil {
 		log.Fatal(err)
@@ -99,15 +107,43 @@ func main() {
 	}
 }
 
+func checkFiles(fs *FS) {
+	fs.Lock()
+	files := fs.downloadFiles
+	fs.downloadFiles = fs.downloadFiles[:0]
+	fs.Unlock()
+	for i := 0; i < len(files); i++ {
+		file := files[i]
+		st, err := fs.Fs.Stat(file)
+		if err != nil {
+			continue
+		}
+		if time.Since(st.ModTime()) < time.Minute*20 {
+			fs.Fs.Remove(file)
+			file, err := fs.Fs.Create(file)
+			if err == nil {
+				file.Close()
+			}
+			files = append(files[:i], files[i+1:]...)
+			i--
+		}
+	}
+	fs.Lock()
+	fs.downloadFiles = append(fs.downloadFiles, files...)
+	fs.Unlock()
+}
+
 var _ fs.FS = (*FS)(nil)
 
 type FS struct {
-	Cookies *cookiejar.CookieJar
-	Client  *fasthttp.Client
-	Name    string
-	Pass    string
-	Fs      afero.Fs
-	items   []*uaitem
+	sync.RWMutex
+	downloadFiles []string
+	Cookies       *cookiejar.CookieJar
+	Client        *fasthttp.Client
+	Name          string
+	Pass          string
+	Fs            afero.Fs
+	items         []*uaitem
 }
 
 func lookup(items []*uaitem, name string) *uaitem {
@@ -157,7 +193,7 @@ var (
 func Info2Attr(info os.FileInfo, a *fuse.Attr) {
 	a.Inode = 0
 	if info.Size() == 0 {
-		a.Size = uint64(fastrand.Uint32n(uint32(190000)))
+		a.Size = uint64(fastrand.Uint32n(uint32(999999)))
 	} else {
 		a.Size = uint64(info.Size())
 	}
