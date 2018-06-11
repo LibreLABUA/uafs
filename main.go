@@ -41,7 +41,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	if dmn == nil { // parent
+	if dmn != nil { // parent
 		return
 	}
 	defer dmn.Release()
