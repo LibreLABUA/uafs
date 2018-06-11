@@ -7,12 +7,14 @@ UA Cloud filesystem in user space.
 go get -u -v -x github.com/LibreLABUA/uafs
 ```
 
+# Dependences
+
+- Requires `fuse`
+
 # Usage
 
 ```bash
-uafs [your user with or without '@alu.ua.es'] [mountpoint]
-```
-
-```bash
-uafs pako2 /tmp/uacloud
+$ # uafs [your user with or without '@alu.ua.es'] [mountpoint]
+$ uafs pako2 /tmp/uacloud  # mounting
+$ fusermount -u /tmp/uacloud # unmounting
 ```
