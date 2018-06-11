@@ -39,6 +39,18 @@ func main() {
 		}
 		pass = b2s(p)
 	}
+	if !strings.Contains(os.Args[1], "@alu") {
+		os.Args[1] += "@alu.ua.es"
+	}
+
+	client, cookies, err := login(
+		os.Args[1], pass,
+	)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	ctx := daemon.Context{
 		Env: append(os.Environ(), "psswrd="+pass),
 	}
@@ -51,18 +63,6 @@ func main() {
 		return
 	}
 	defer dmn.Release()
-
-	if !strings.Contains(os.Args[1], "@alu") {
-		os.Args[1] += "@alu.ua.es"
-	}
-
-	client, cookies, err := login(
-		os.Args[1], pass,
-	)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 
 	created := false
 	if _, err := os.Stat(os.Args[2]); err != nil {
