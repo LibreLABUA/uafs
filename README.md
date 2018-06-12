@@ -18,3 +18,5 @@ $ # uafs [your user with or without '@alu.ua.es'] [mountpoint]
 $ uafs pako2 /tmp/uacloud  # mounting
 $ fusermount -u /tmp/uacloud # unmounting
 ```
+
+This filesystem does not support `mv` operations (only `cp`)
