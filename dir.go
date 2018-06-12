@@ -28,12 +28,6 @@ func (d *Dir) Getxattr(ctx context.Context, req *fuse.GetxattrRequest, resp *fus
 	return fuse.ErrNoXattr
 }
 
-func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, node fs.Node) error {
-	nd := node.(*Dir)
-	from, to := path.Join(d.Name, req.OldName), path.Join(nd.Name, req.NewName)
-	return d.Root.Fs.Rename(from, to)
-}
-
 func (d *Dir) Lookup(_ context.Context, name string) (fs.Node, error) {
 	f, err := d.Root.Fs.Open(d.Name)
 	if err != nil {
