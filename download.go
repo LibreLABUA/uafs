@@ -128,7 +128,7 @@ func (fs *FS) download(item *uaitem) error {
 	args.WriteTo(req.BodyWriter())
 	fasthttp.ReleaseArgs(args)
 
-	to := path.Join(item.path, item.name)
+	to := formatName(path.Join(item.path, item.name))
 
 	err := doReqFollowRedirects(req, res, client, cookies)
 	if err != nil {
@@ -217,6 +217,7 @@ func (fs *FS) getItems(item *uaitem) error {
 					folder:  folder,
 				}
 				if folder {
+					it.path = path.Join(it.path, it.name)
 					dirs = append(dirs, it)
 				}
 				dirs[inc].items = append(dirs[inc].items, it)

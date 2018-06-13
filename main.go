@@ -163,14 +163,13 @@ func (fs *FS) fill(dir string, items []*uaitem) {
 		filepath := path.Join(dir, item.name)
 		if item.folder {
 			fs.Fs.Mkdir(filepath, 0777)
+			fs.fill(filepath, item.items)
 		} else {
 			file, err := fs.Fs.Create(filepath)
 			if err == nil {
 				file.Close()
 			}
-			continue
 		}
-		fs.fill(filepath, item.items)
 	}
 }
 
