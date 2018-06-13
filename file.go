@@ -38,6 +38,7 @@ func (f *File) Attr(_ context.Context, attr *fuse.Attr) error {
 	return nil
 }
 
+// Open opens a file
 func (f *File) Open(_ context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fs.Handle, error) {
 	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	err := f.fill()
@@ -55,6 +56,7 @@ func (f *File) Open(_ context.Context, req *fuse.OpenRequest, resp *fuse.OpenRes
 	return f, nil
 }
 
+// fill download file from UACloud
 func (f *File) fill() error {
 	if f.item == nil {
 		f.item = lookup(f.Root.items, f.Name)
@@ -72,6 +74,7 @@ func (f *File) fill() error {
 	return nil
 }
 
+// ReadAll reads all file contents
 func (f *File) ReadAll(_ context.Context) ([]byte, error) {
 	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	err := f.fill()
@@ -108,6 +111,7 @@ end:
 	return bf[:nn], err
 }
 
+// Read reads file contents
 func (f *File) Read(_ context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) (err error) {
 	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	var n int
@@ -124,6 +128,7 @@ end:
 	return
 }
 
+// Release close file object
 func (f *File) Release(_ context.Context, req *fuse.ReleaseRequest) error {
 	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	if f.file != nil {
@@ -133,6 +138,7 @@ func (f *File) Release(_ context.Context, req *fuse.ReleaseRequest) error {
 	return nil
 }
 
+// Write writes in a file
 func (f *File) Write(_ context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) (err error) {
 	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
 	var n int
@@ -144,13 +150,4 @@ func (f *File) Write(_ context.Context, req *fuse.WriteRequest, resp *fuse.Write
 	resp.Size = n
 end:
 	return err
-}
-
-func (f *File) Getattr(_ context.Context, req *fuse.GetattrRequest, res *fuse.GetattrResponse) error {
-	st, err := f.Root.Fs.Stat(f.Name)
-	if err != nil {
-		return fuse.ENOENT
-	}
-	Info2Attr(st, &res.Attr)
-	return nil
 }

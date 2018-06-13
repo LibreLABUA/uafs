@@ -16,6 +16,7 @@ var (
 
 func login(user, pass string) (*fasthttp.Client, *cookiejar.CookieJar, error) {
 	client := &fasthttp.Client{
+		// nice user agent you can choose whatever you want ex: Jomoza sube minecraft
 		Name:                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
 		MaxResponseBodySize: MB * 100, // 100 mb of download files
 	}

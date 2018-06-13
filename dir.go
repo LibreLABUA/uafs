@@ -28,6 +28,7 @@ func (d *Dir) Getxattr(ctx context.Context, req *fuse.GetxattrRequest, resp *fus
 	return fuse.ErrNoXattr
 }
 
+// Lookup search file inside directory
 func (d *Dir) Lookup(_ context.Context, name string) (fs.Node, error) {
 	f, err := d.Root.Fs.Open(d.Name)
 	if err != nil {
@@ -62,6 +63,7 @@ func (d *Dir) Lookup(_ context.Context, name string) (fs.Node, error) {
 	return nil, fuse.ENOENT
 }
 
+// ReadDirAll returns all files in directory
 func (d *Dir) ReadDirAll(_ context.Context) ([]fuse.Dirent, error) {
 	file, err := d.Root.Fs.Open(d.Name)
 	if err != nil {

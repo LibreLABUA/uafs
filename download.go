@@ -25,6 +25,7 @@ var (
 	rfold = regexp.MustCompile(`<div class="(.*?)" data-id`)
 )
 
+// getFolders fetch all main folders
 func (fs *FS) getFolders() error {
 	client := fs.Client
 	cookies := fs.Cookies
@@ -110,6 +111,7 @@ var (
 	rid   = regexp.MustCompile(`<div class="columna1">(.*?)</div>`)
 )
 
+// download a file
 func (fs *FS) download(item *uaitem) error {
 	client := fs.Client
 	cookies := fs.Cookies
@@ -158,6 +160,7 @@ func (fs *FS) download(item *uaitem) error {
 	return nil
 }
 
+// getItems fetch main folder items recursively
 func (fs *FS) getItems(item *uaitem) error {
 	client := fs.Client
 	cookies := fs.Cookies

@@ -22,6 +22,7 @@ import (
 	"github.com/valyala/fastrand"
 )
 
+// max cache files
 var maxFiles = flag.Int("n", 5, "Max files")
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
 		fmt.Printf("%s <username>@alu.ua.es <mount point>\n", os.Args[0])
 		os.Exit(0)
 	}
+	// TODO: key daemon process
 	pass := os.Getenv("psswrd")
 	if pass == "" {
 		fmt.Printf("Password: ")
@@ -43,14 +45,17 @@ func main() {
 		os.Args[1] += "@alu.ua.es"
 	}
 
+	// logging in
 	client, cookies, err := login(
 		os.Args[1], pass,
 	)
 	if err != nil {
+		// bad password or client error
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
+	// invoking daemon
 	ctx := daemon.Context{
 		Env: append(os.Environ(), "psswrd="+pass),
 	}
@@ -64,12 +69,14 @@ func main() {
 	}
 	defer dmn.Release()
 
+	// stat of mount dir
 	created := false
 	if _, err := os.Stat(os.Args[2]); err != nil {
 		created = true
 		os.Mkdir(os.Args[2], 0755)
 	}
 
+	// creating virtual filesystem
 	root := &FS{
 		Cookies: cookies,
 		Client:  client,
@@ -79,12 +86,13 @@ func main() {
 		items:   make([]*uaitem, 0),
 	}
 	root.Fs.MkdirAll("/", 0777)
+	// getting UACloud folders
 	root.getFolders()
 	for i := range root.items {
 		root.getItems(root.items[i])
 	}
 	root.fill("/", root.items)
-
+	// mounting fuse system
 	fconn, err := fuse.Mount(
 		os.Args[2],
 		fuse.FSName("uafs"),
@@ -96,8 +104,10 @@ func main() {
 	}
 	defer fconn.Close()
 
+	// see checkFiles function
+	// checkFiles function will be done every 5 minutes
 	gocron.Every(2).Minutes().Do(checkFiles, root)
-
+	// serve filesystem connections
 	err = fs.Serve(fconn, root)
 	if err != nil {
 		log.Fatal(err)
@@ -107,9 +117,14 @@ func main() {
 	}
 }
 
+// checkFiles checks cache files
+// if file has not been modified in 20 minutes it will be deleted.
 func checkFiles(fs *FS) {
+	// using mutexes
 	fs.Lock()
+	// copying cache files
 	files := fs.downloadFiles
+	// resetting files
 	fs.downloadFiles = fs.downloadFiles[:0]
 	fs.Unlock()
 	for i := 0; i < len(files); i++ {
@@ -118,7 +133,9 @@ func checkFiles(fs *FS) {
 		if err != nil {
 			continue
 		}
-		if time.Since(st.ModTime()) < time.Minute*20 {
+		// getting last modification time
+		if time.Since(st.ModTime()) > time.Minute*20 {
+			// removing
 			fs.Fs.Remove(file)
 			file, err := fs.Fs.Create(file)
 			if err == nil {
@@ -128,24 +145,32 @@ func checkFiles(fs *FS) {
 			i--
 		}
 	}
+	// unlocking and adding to cache slice
 	fs.Lock()
 	fs.downloadFiles = append(fs.downloadFiles, files...)
 	fs.Unlock()
 }
 
+// filesystem fuse structure
 var _ fs.FS = (*FS)(nil)
 
 type FS struct {
 	sync.RWMutex
+	// cache slice
 	downloadFiles []string
-	Cookies       *cookiejar.CookieJar
-	Client        *fasthttp.Client
-	Name          string
-	Pass          string
-	Fs            afero.Fs
-	items         []*uaitem
+	// UACloud cookies
+	Cookies *cookiejar.CookieJar
+	// UACloud client
+	Client *fasthttp.Client
+	Name   string
+	Pass   string
+	// Virtual in-memory filesystem
+	Fs afero.Fs
+	// downloaded items
+	items []*uaitem
 }
 
+// find item by name (path)
 func lookup(items []*uaitem, name string) *uaitem {
 	for _, item := range items {
 		if path.Join(item.path, item.name) == name {
@@ -158,6 +183,7 @@ func lookup(items []*uaitem, name string) *uaitem {
 	return nil
 }
 
+// fill fills fs.Fs using items
 func (fs *FS) fill(dir string, items []*uaitem) {
 	for _, item := range items {
 		filepath := path.Join(dir, item.name)
