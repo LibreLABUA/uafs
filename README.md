@@ -3,21 +3,19 @@ UA Cloud filesystem in user space.
 
 # Installation
 
-Linux:
+Before download install [fuse](https://docs.oracle.com/cd/E76382_01/bigData.Doc/install_onPrem/src/tins_prereq_index_fuse.html) and [Golang](https://golang.org/dl/) dependences.
+
+Linux and MacOS:
 
 ```bash
 curl http://d.librelabua.org/uafs-install.sh | bash
 ```
 
-Go get:
+via go get:
 
 ```bash
 go get -u -v -x github.com/LibreLABUA/uafs
 ```
-
-# Dependences
-
-- Requires [fuse](https://docs.oracle.com/cd/E76382_01/bigData.Doc/install_onPrem/src/tins_prereq_index_fuse.html) and [Golang](https://golang.org/dl/)
 
 # Usage
 
