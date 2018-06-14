@@ -14,6 +14,8 @@ type Dir struct {
 	item *uaitem
 }
 
+var _ fs.Node = (*Dir)(nil)
+
 // Attr fills a with file attributes. Ignores context.
 func (d *Dir) Attr(_ context.Context, a *fuse.Attr) error {
 	st, err := d.Root.Fs.Stat(d.Name)
@@ -24,9 +26,13 @@ func (d *Dir) Attr(_ context.Context, a *fuse.Attr) error {
 	return nil
 }
 
+var _ fs.NodeGetxattrer = (*Dir)(nil)
+
 func (d *Dir) Getxattr(ctx context.Context, req *fuse.GetxattrRequest, resp *fuse.GetxattrResponse) error {
 	return fuse.ErrNoXattr
 }
+
+var _ fs.NodeStringLookuper = (*Dir)(nil)
 
 // Lookup search file inside directory
 func (d *Dir) Lookup(_ context.Context, name string) (fs.Node, error) {
@@ -62,6 +68,8 @@ func (d *Dir) Lookup(_ context.Context, name string) (fs.Node, error) {
 	}
 	return nil, fuse.ENOENT
 }
+
+var _ fs.HandleReadDirAller = (*Dir)(nil)
 
 // ReadDirAll returns all files in directory
 func (d *Dir) ReadDirAll(_ context.Context) ([]fuse.Dirent, error) {

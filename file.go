@@ -28,6 +28,8 @@ type File struct {
 	item *uaitem
 }
 
+var _ fs.Node = (*File)(nil)
+
 // Attr writes file attributes to attr
 func (f *File) Attr(_ context.Context, attr *fuse.Attr) error {
 	st, err := f.Root.Fs.Stat(f.Name)
@@ -37,6 +39,8 @@ func (f *File) Attr(_ context.Context, attr *fuse.Attr) error {
 	Info2Attr(st, attr)
 	return nil
 }
+
+var _ fs.NodeOpener = (*File)(nil)
 
 // Open opens a file
 func (f *File) Open(_ context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fs.Handle, error) {
@@ -73,6 +77,8 @@ func (f *File) fill() error {
 	}
 	return nil
 }
+
+var _ fs.HandleReadAller = (*File)(nil)
 
 // ReadAll reads all file contents
 func (f *File) ReadAll(_ context.Context) ([]byte, error) {
@@ -111,6 +117,8 @@ end:
 	return bf[:nn], err
 }
 
+var _ fs.HandleReader = (*File)(nil)
+
 // Read reads file contents
 func (f *File) Read(_ context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) (err error) {
 	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
@@ -128,6 +136,8 @@ end:
 	return
 }
 
+var _ fs.HandleReleaser = (*File)(nil)
+
 // Release close file object
 func (f *File) Release(_ context.Context, req *fuse.ReleaseRequest) error {
 	defer f.Root.Fs.Chtimes(f.Name, time.Now(), time.Now())
@@ -137,6 +147,8 @@ func (f *File) Release(_ context.Context, req *fuse.ReleaseRequest) error {
 	}
 	return nil
 }
+
+var _ fs.HandleWriter = (*File)(nil)
 
 // Write writes in a file
 func (f *File) Write(_ context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) (err error) {
