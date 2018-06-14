@@ -57,7 +57,8 @@ func main() {
 
 	// invoking daemon
 	ctx := daemon.Context{
-		Env: append(os.Environ(), "psswrd="+pass),
+		Env:         append(os.Environ(), "psswrd="+pass),
+		LogFileName: path.Join(os.TempDir(), "uafs.log"),
 	}
 	dmn, err := ctx.Reborn()
 	if err != nil {
