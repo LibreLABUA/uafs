@@ -70,7 +70,7 @@ func (fs *FS) getFolders() error {
 		for j := 1; j < len(codeMatch[i]) && j < len(nameMatch[i]); j += 2 {
 			name := formatName(string(nameMatch[i][j]))
 			it := &uaitem{
-				folder:  strings.Contains(string(foldMatch[i][j]), "carpeta"),
+				folder:  bytes.Contains(foldMatch[i][j], []byte("carpeta")),
 				cod:     "-1",
 				path:    path.Join("/", name),
 				codasig: string(codeMatch[i+1][j]),
@@ -130,16 +130,14 @@ func (fs *FS) download(item *uaitem) error {
 	args.WriteTo(req.BodyWriter())
 	fasthttp.ReleaseArgs(args)
 
-	to := formatName(path.Join(item.path, item.name))
+	to := path.Join(item.path, item.name)
 
 	err := doReqFollowRedirects(req, res, client, cookies)
 	if err != nil {
 		return err
 	}
 	if bytes.Equal(res.Header.ContentType(), []byte("application/zip")) {
-		if !strings.Contains(
-			path.Ext(to), ".zip",
-		) {
+		if !strings.Contains(path.Ext(to), ".zip") {
 			to += ".zip"
 		}
 	}
@@ -151,9 +149,22 @@ func (fs *FS) download(item *uaitem) error {
 	res.BodyWriteTo(file)
 	file.Close()
 
+	del := ""
 	fs.Lock()
 	fs.downloadFiles = append(fs.downloadFiles, to)
+	if len(fs.downloadFiles) > *maxFiles {
+		del = fs.downloadFiles[0]
+		fs.downloadFiles = fs.downloadFiles[1:]
+	}
 	fs.Unlock()
+
+	if del != "" {
+		fs.Fs.Remove(del)
+		file, err = fs.Fs.Create(del)
+		if err == nil {
+			file.Close()
+		}
+	}
 
 	fasthttp.ReleaseRequest(req)
 	fasthttp.ReleaseResponse(res)
@@ -204,9 +215,9 @@ func (fs *FS) getItems(item *uaitem) error {
 		for i := 0; i < len(idMatch); i++ {
 		sloop:
 			for j := 1; j < len(idMatch[i]); j += 2 {
-				folder := strings.Contains(string(dirMatch[i][j]), "carpeta")
+				folder := bytes.Contains(dirMatch[i][j], []byte("carpeta"))
 				if !folder {
-					if !strings.Contains(string(dirMatch[i][j]), "archivo") {
+					if !bytes.Contains(dirMatch[i][j], []byte("archivo")) {
 						continue sloop
 					}
 				}
