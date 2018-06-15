@@ -65,6 +65,7 @@ func (fs *FS) getFolders() error {
 	codeMatch := rcod.FindAllSubmatch(body, -1)
 	nameMatch := rasig.FindAllSubmatch(body, -1)
 	foldMatch := rfold.FindAllSubmatch(body, -1)
+	fs.items = fs.items[:0]
 	// ignoring first
 	for i := 0; i < len(codeMatch) && i < len(nameMatch); i++ {
 		for j := 1; j < len(codeMatch[i]) && j < len(nameMatch[i]); j += 2 {
@@ -179,6 +180,7 @@ func (fs *FS) getItems(item *uaitem) error {
 	dirs := make([]*uaitem, 1)
 	dirs[0] = item
 	for inc := 0; inc < len(dirs); inc++ {
+		dirs[inc].items = dirs[inc].items[:0]
 		args := fasthttp.AcquireArgs()
 		req, res := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
 

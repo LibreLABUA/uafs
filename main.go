@@ -23,7 +23,10 @@ import (
 )
 
 // max cache files
-var maxFiles = flag.Int("n", 5, "Max files")
+var (
+	maxFiles    = flag.Int("n", 5, "Max files")
+	cacheUpdate = flag.Uint64("u", 2, "Cache update time")
+)
 
 func main() {
 	if len(os.Args) < 3 {
@@ -86,13 +89,8 @@ func main() {
 		Fs:      afero.NewMemMapFs(),
 		items:   make([]*uaitem, 0),
 	}
-	root.Fs.MkdirAll("/", 0777)
-	// getting UACloud folders
-	root.getFolders()
-	for i := range root.items {
-		root.getItems(root.items[i])
-	}
-	root.fill("/", root.items)
+	root.fetch()
+
 	// mounting fuse system
 	fconn, err := fuse.Mount(
 		os.Args[2],
@@ -107,7 +105,7 @@ func main() {
 
 	// see checkFiles function
 	// checkFiles function will be done every 5 minutes
-	gocron.Every(2).Minutes().Do(checkFiles, root)
+	gocron.Every(*cacheUpdate).Minutes().Do(checkFiles, root)
 	// serve filesystem connections
 	err = fs.Serve(fconn, root)
 	if err != nil {
@@ -121,6 +119,7 @@ func main() {
 // checkFiles checks cache files
 // if file has not been modified in 20 minutes it will be deleted.
 func checkFiles(fs *FS) {
+	defer fs.fetch()
 	// using mutexes
 	fs.Lock()
 	// copying cache files
@@ -169,6 +168,17 @@ type FS struct {
 	Fs afero.Fs
 	// downloaded items
 	items []*uaitem
+}
+
+func (root *FS) fetch() {
+	// getting UACloud folders
+	root.getFolders()
+	for i := range root.items {
+		root.getItems(root.items[i])
+	}
+	root.Fs.RemoveAll("/*")
+	root.Fs.Mkdir("/", 0777)
+	root.fill("/", root.items)
 }
 
 // find item by name (path)
