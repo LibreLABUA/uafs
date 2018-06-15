@@ -38,7 +38,14 @@ func (fs *FS) getFolders() error {
 	req.SetRequestURI(urlFuck)
 	err := doReqFollowRedirects(req, res, client, cookies)
 	if err != nil {
-		return err
+		client, cookies, err = login(
+			fs.Name, fs.Pass,
+		)
+		if err != nil {
+			return err
+		}
+		fs.Client = client
+		fs.Cookies = cookies
 	}
 	req.Reset()
 	res.Reset()
