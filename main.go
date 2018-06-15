@@ -57,6 +57,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	os.Unsetenv("psswrd")
 
 	// invoking daemon
 	ctx := daemon.Context{
