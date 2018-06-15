@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"io"
 	"sync"
 	"time"
@@ -9,6 +8,7 @@ import (
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 	"github.com/spf13/afero"
+	"golang.org/x/net/context"
 )
 
 const byteSize = 1024
